@@ -1,52 +1,53 @@
 /*
- * OMG Group — "Join Our Team" Google Places autocomplete
- * Form id: 2  |  Page: https://omggroup.com.au/join-our-team/
+ * OMG Group — Google Places autocomplete for Gravity Forms
  *
- * Attaches Google Places Autocomplete to the Address field and auto-populates
- * the separate Suburb, State, Postal Code and Country fields. Adds a search
- * icon inside the Address field.
+ * Form 2 (Join Our Team, /join-our-team/):
+ *   Address input_2_17 -> Suburb 18 (text), State 16 (select), Postcode 19, Country 20
+ * Form 3 (Partner With Us, /partner-with-us/):
+ *   Address input_3_14 -> City 15 (text), State 21 (checkbox group), Postcode 18, Country 19
  *
- * Field map (form 2):
- *   Address      -> #input_2_17  (text)   street number + route
- *   Suburb       -> #input_2_18  (text)   locality
- *   State        -> #input_2_16  (select) admin_area_level_1 short_name
- *   Postal Code  -> #input_2_19  (text)   postal_code
- *   Country      -> #input_2_20  (text)   country long_name
+ * Attaches Autocomplete to each form's Address field and auto-populates the
+ * other fields. A search icon is added to the Address field via CSS.
  */
 (function () {
   'use strict';
 
-  var CONFIG = {
-    apiKey: 'AIzaSyAQPSgakhnhy0F8oSeb94We6qWr8wtoaJg', // restrict by HTTP referrer in Google Cloud
-    country: 'au',
-    fields: {
-      address: 'input_2_17',
-      suburb:  'input_2_18',
-      state:   'input_2_16',
-      zip:     'input_2_19',
-      country: 'input_2_20'
-    }
-  };
+  var API_KEY = 'AIzaSyAQPSgakhnhy0F8oSeb94We6qWr8wtoaJg'; // restrict by HTTP referrer in Google Cloud
+  var COUNTRY = 'au';
 
-  // ---- small helpers --------------------------------------------------------
+  // Each form: the Address input bound to Autocomplete, plus the fields to fill.
+  // comp = which address component feeds the field; kind = how to write it.
+  var FORMS = [
+    { formId: 2, address: 'input_2_17', fields: [
+        { comp: 'locality', kind: 'text',   id: 'input_2_18' },   // Suburb
+        { comp: 'state',    kind: 'select', id: 'input_2_16' },   // State dropdown
+        { comp: 'postal',   kind: 'text',   id: 'input_2_19' },   // Postal Code
+        { comp: 'country',  kind: 'text',   id: 'input_2_20' }    // Country
+    ] },
+    { formId: 3, address: 'input_3_14', fields: [
+        { comp: 'locality', kind: 'text',     id: 'input_3_15' },       // City
+        { comp: 'state',    kind: 'checkbox', group: 'choice_3_21_' },  // State checkboxes
+        { comp: 'postal',   kind: 'text',     id: 'input_3_18' },       // ZIP / Postal Code
+        { comp: 'country',  kind: 'text',     id: 'input_3_19' }        // Country
+    ] }
+  ];
+
   function byId(id) { return document.getElementById(id); }
 
-  function setValue(id, value) {
+  function setText(id, v) {
     var el = byId(id);
-    if (!el || value == null) return;
-    el.value = value;
-    // Let Gravity Forms / conditional logic / Chosen notice the change.
+    if (!el || v == null) return;
+    el.value = v;
     el.dispatchEvent(new Event('input',  { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  // The Address field is the one bound to Autocomplete. Writing to it must NOT
-  // fire an 'input' event, or the Autocomplete widget re-runs its search and
-  // the suggestions dropdown reopens in a loop. Fire 'change' only.
-  function setAddressValue(id, value) {
+  // The Address field is bound to Autocomplete; writing to it must NOT fire an
+  // 'input' event or the widget re-queries and the dropdown reopens. 'change' only.
+  function setAddress(id, v) {
     var el = byId(id);
     if (!el) return;
-    el.value = value == null ? '' : value;
+    el.value = v == null ? '' : v;
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
@@ -58,7 +59,6 @@
       if (el.options[i].value.toUpperCase() === want) {
         el.selectedIndex = i;
         el.dispatchEvent(new Event('change', { bubbles: true }));
-        // Keep a Chosen-enhanced select in sync, if present.
         if (window.jQuery && window.jQuery(el).data('chosen')) {
           window.jQuery(el).trigger('chosen:updated');
         }
@@ -67,7 +67,22 @@
     }
   }
 
-  // Pull a named component out of a Google place result.
+  // Tick the checkbox whose value matches the state abbreviation; clear the rest
+  // in the same group so a new selection replaces the old one.
+  function setCheckboxGroup(prefix, shortName) {
+    if (!shortName) return;
+    var want = String(shortName).toUpperCase();
+    var nodes = document.querySelectorAll('input[id^="' + prefix + '"]');
+    for (var i = 0; i < nodes.length; i++) {
+      var cb = nodes[i];
+      var match = (cb.value || '').toUpperCase() === want;
+      if (cb.checked !== match) {
+        cb.checked = match;
+        cb.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+  }
+
   function pick(components, type, useShort) {
     for (var i = 0; i < components.length; i++) {
       if (components[i].types.indexOf(type) !== -1) {
@@ -77,54 +92,45 @@
     return '';
   }
 
-  // ---- fill the form from a selected place ----------------------------------
-  function fillFromPlace(place) {
-    if (!place || !place.address_components) return;
-    var c = place.address_components;
-
-    var streetNo = pick(c, 'street_number', false);
-    var route    = pick(c, 'route', false);
-    var street   = (streetNo + ' ' + route).trim();
-
-    var suburb = pick(c, 'locality', false)
-              || pick(c, 'postal_town', false)
-              || pick(c, 'sublocality_level_1', false)
-              || pick(c, 'sublocality', false);
-
-    var state = pick(c, 'administrative_area_level_1', true);  // e.g. "NSW"
-    var zip   = pick(c, 'postal_code', false);
-    var ctry  = pick(c, 'country', false);                     // e.g. "Australia"
-
-    // Address line: prefer the street; fall back to the place name so the box
-    // is never left showing the full "street, suburb, state" formatted string.
-    setAddressValue(CONFIG.fields.address, street || place.name || '');
-    setValue(CONFIG.fields.suburb,  suburb);
-    setSelect(CONFIG.fields.state,  state);
-    setValue(CONFIG.fields.zip,     zip);
-    setValue(CONFIG.fields.country, ctry);
+  function components(place) {
+    var c = place.address_components || [];
+    return {
+      street:   ((pick(c, 'street_number', false) + ' ' + pick(c, 'route', false)).trim()) || place.name || '',
+      locality: pick(c, 'locality', false) || pick(c, 'postal_town', false)
+             || pick(c, 'sublocality_level_1', false) || pick(c, 'sublocality', false),
+      state:    pick(c, 'administrative_area_level_1', true),
+      postal:   pick(c, 'postal_code', false),
+      country:  pick(c, 'country', false)
+    };
   }
 
-  // ---- attach autocomplete to the address field -----------------------------
-  // (The search icon is a pure-CSS background-image on the input; see the CSS.)
-  function initField() {
-    var input = byId(CONFIG.fields.address);
-    if (!input || input.dataset.omgAac === '1') return; // run once per field
+  function fill(cfg, place) {
+    if (!place || !place.address_components) return;
+    var v = components(place);
+    setAddress(cfg.address, v.street);
+    for (var i = 0; i < cfg.fields.length; i++) {
+      var f = cfg.fields[i], val = v[f.comp];
+      if (f.kind === 'text')          setText(f.id, val);
+      else if (f.kind === 'select')   setSelect(f.id, val);
+      else if (f.kind === 'checkbox') setCheckboxGroup(f.group, val);
+    }
+  }
+
+  function initForm(cfg) {
+    var input = byId(cfg.address);
+    if (!input || input.dataset.omgAac === '1') return; // once per field
     if (!(window.google && google.maps && google.maps.places)) return;
 
     input.dataset.omgAac = '1';
-    input.classList.add('omg-aac-field');
+    input.classList.add('omg-aac-field'); // search icon (CSS)
 
     var auto = new google.maps.places.Autocomplete(input, {
-      componentRestrictions: { country: CONFIG.country },
+      componentRestrictions: { country: COUNTRY },
       fields: ['address_components', 'formatted_address', 'geometry', 'name'],
       types: ['address']
     });
+    auto.addListener('place_changed', function () { fill(cfg, auto.getPlace()); });
 
-    auto.addListener('place_changed', function () {
-      fillFromPlace(auto.getPlace());
-    });
-
-    // Stop the Enter key (used to accept a suggestion) from submitting the form.
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.keyCode === 13) {
         var pac = document.querySelector('.pac-container');
@@ -133,46 +139,39 @@
     });
   }
 
-  // ---- load the Google Maps JS API once, then init --------------------------
-  function ensureApiThenInit() {
-    if (!byId(CONFIG.fields.address)) return; // field not on this page
+  function initAll() { for (var i = 0; i < FORMS.length; i++) initForm(FORMS[i]); }
 
-    if (window.google && google.maps && google.maps.places) {
-      initField();
-      return;
-    }
-    // Another script (e.g. the old plugin) may already be loading it.
+  function anyAddressField() {
+    for (var i = 0; i < FORMS.length; i++) { if (byId(FORMS[i].address)) return true; }
+    return false;
+  }
+
+  function ensure() {
+    if (!anyAddressField()) return; // no target form on this page
+
+    if (window.google && google.maps && google.maps.places) { initAll(); return; }
     if (window.__omgAacLoading) {
       var t = setInterval(function () {
-        if (window.google && google.maps && google.maps.places) {
-          clearInterval(t);
-          initField();
-        }
+        if (window.google && google.maps && google.maps.places) { clearInterval(t); initAll(); }
       }, 200);
       return;
     }
     window.__omgAacLoading = true;
-    window.__omgAacInit = function () { initField(); };
+    window.__omgAacInit = function () { initAll(); };
     var s = document.createElement('script');
-    s.src = 'https://maps.googleapis.com/maps/api/js?key=' +
-      encodeURIComponent(CONFIG.apiKey) +
-      '&libraries=places&loading=async&callback=__omgAacInit';
-    s.async = true;
-    s.defer = true;
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(API_KEY) +
+            '&libraries=places&loading=async&callback=__omgAacInit';
+    s.async = true; s.defer = true;
     document.head.appendChild(s);
   }
 
-  // ---- bootstrap: initial load + Gravity Forms AJAX re-render ---------------
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureApiThenInit);
+    document.addEventListener('DOMContentLoaded', ensure);
   } else {
-    ensureApiThenInit();
+    ensure();
   }
-
-  // Gravity Forms re-renders the form markup after AJAX validation; re-attach.
+  // Re-attach after Gravity Forms AJAX re-renders a form.
   if (window.jQuery) {
-    window.jQuery(document).on('gform_post_render', function (e, formId) {
-      if (formId == 2) ensureApiThenInit();
-    });
+    window.jQuery(document).on('gform_post_render', function () { ensure(); });
   }
 })();

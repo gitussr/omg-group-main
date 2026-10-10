@@ -69,3 +69,18 @@ The key used is `AIzaSyAQPSgakhnhy0F8oSeb94We6qWr8wtoaJg`. In Google Cloud:
   does not retrofit cleanly onto a Gravity Forms field.)
 - Re-initialises on `gform_post_render` so it still works after the form's AJAX
   validation re-renders the markup.
+
+
+## Form 3 — Partner With Us (/partner-with-us/)
+The same autocomplete now also runs on Gravity Form 3. Field map:
+
+| Form field | Input id | Element | Filled from |
+|---|---|---|---|
+| Address | `input_3_14` | text | street |
+| City | `input_3_15` | text | locality |
+| State | `choice_3_21_1..8` | checkbox group | state abbrev (ACT/NSW/NT/QLD/SA/TAS/VIC/WA) |
+| ZIP / Postal Code | `input_3_18` | text | postal_code |
+| Country | `input_3_19` | text | country |
+
+The State checkbox matching the detected state is ticked (others in the group
+cleared). The script is multi-form: `FORMS` in the JS lists both form 2 and 3.
