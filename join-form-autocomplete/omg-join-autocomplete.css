@@ -1,0 +1,33 @@
+/* OMG Group "Join Our Team" — Address field search icon
+ * Scoped to form 2's Address field container so nothing else is affected. */
+
+#field_2_17 .omg-aac-field,
+.omg-aac-field {
+  position: relative;
+}
+
+/* Magnifying-glass icon sitting inside the left edge of the Address input. */
+.omg-aac-field .omg-aac-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;      /* neutral grey; inherits currentColor into the SVG */
+  pointer-events: auto;
+  cursor: text;
+  z-index: 2;
+  line-height: 0;
+}
+
+/* Make room for the icon so typed text never overlaps it. */
+.omg-aac-field #input_2_17 {
+  padding-left: 38px !important;
+}
+
+/* Keep Google's suggestion dropdown above the form / theme layers. */
+.pac-container {
+  z-index: 100000 !important;
+}

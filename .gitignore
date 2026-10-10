@@ -1,0 +1,17 @@
+# --- Secrets: NEVER commit these ---
+omggroup-ftp-cred.txt
+*cred*.txt
+*credential*
+*.pem
+*.key
+.htpasswd
+
+# OS / editor noise
+Thumbs.db
+.DS_Store
+*.swp
+*~
+
+# Temp
+/tmp/
+*.log
