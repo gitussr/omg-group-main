@@ -1,0 +1,13 @@
+/* ===== OMG footer tweaks — 2026-10-10 (square social icons + logo vertical-center) ===== */
+/* Req 3: square social icons (shape only — keeps existing size/background/colour) */
+footer .bottom-block .social-media li a .wrapper .icon{
+   border-radius: 6px;
+}
+/* Req 5: footer logo vertically centered within its column */
+footer .bottom-block .row > [class^="col-"]:last-child{
+   align-items: center;
+}
+footer .bottom-block .row > [class^="col-"]:last-child .box{
+   height: auto;
+}
+/* ===== end OMG footer tweaks ===== */
