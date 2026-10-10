@@ -149,7 +149,10 @@
                         <div class="col-lg-3 col-sm-6">
                             <div class="box footer-logo-box">
                                 <strong class="footer-logo-cta">Visit Entertainment</strong>
-                                <?php the_custom_logo(); ?>
+                                <?php // Current custom logo kept DORMANT (still set in Customizer, not deleted): the_custom_logo(); ?>
+                                <a href="https://creativus-sites.com/demo/dev/omg-entertainment-new" class="custom-logo-link" target="_blank" rel="noopener">
+                                    <img src="<?php echo get_template_directory_uri(); ?>/assets/images/omg-logo-footer.png" class="custom-logo" alt="OMG Entertainment Group" width="1806" height="787" />
+                                </a>
                             </div>
                         </div>
                     </div>
