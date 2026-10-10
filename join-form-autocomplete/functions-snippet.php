@@ -10,9 +10,9 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 add_action( 'wp_enqueue_scripts', function () {
-	wp_register_script( 'omg-join-aac', '', array(), '1.1.0', true );
+	wp_register_script( 'omg-join-aac', '', array(), '1.1.1', true );
 	wp_enqueue_script( 'omg-join-aac' );
-	wp_register_style( 'omg-join-aac', false, array(), '1.1.0' );
+	wp_register_style( 'omg-join-aac', false, array(), '1.1.1' );
 	wp_enqueue_style( 'omg-join-aac' );
 	$css = <<<'OMGCSS'
 /* OMG Group "Join Our Team" — Address field search icon
@@ -20,7 +20,7 @@ add_action( 'wp_enqueue_scripts', function () {
  * never be covered by the theme and never blocks typing or the caret. */
 
 #input_2_17 {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='18'%20height='18'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%238a8a8a'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='11'%20cy='11'%20r='7'/%3E%3Cline%20x1='21'%20y1='21'%20x2='16.65'%20y2='16.65'/%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='18'%20height='18'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23333333'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='11'%20cy='11'%20r='7'/%3E%3Cline%20x1='21'%20y1='21'%20x2='16.65'%20y2='16.65'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: right 14px center !important;
   background-size: 18px 18px !important;
