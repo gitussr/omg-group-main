@@ -132,7 +132,7 @@
                                 <h3>Contact Us</h3>
                                 <ul>
 									<li><a href="<?php echo get_home_url();?>">OMG Entertainment Group (HQ)</a></li>
-                                    <li><a href="tel:<?php echo $phone_number; ?>"><strong><?php echo $phone_number; ?></strong></a></li>
+                                    <li><a href="tel:<?php echo $phone_number; ?>"><strong><?php echo $phone_number; ?> (OMG)</strong></a></li>
                                     <li><a href="mailto:<?php echo $email_address; ?>"><?php echo $email_address; ?></a></li>
 									<li class="whatsapp-link-footer">
 										<a href="<?php echo $whatsapp_link; ?>" title="WhatsApp" target="_blank" class="d-flex align-items-center gap-1">
