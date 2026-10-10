@@ -18,7 +18,7 @@ footer .bottom-block .footer-logo-box{
    gap: clamp(10px, 0.781vw, 15px);
 }
 footer .bottom-block .footer-logo-cta{
-   font-weight: 700;
+   font-weight: 500;
    color: var(--primary-solid-color);
    font-size: var(--uc-font-size-20);
    line-height: 1.2;
