@@ -147,8 +147,9 @@
                         </div>
 
                         <div class="col-lg-3 col-sm-6">
-                            <div class="box">
+                            <div class="box footer-logo-box">
                                 <?php the_custom_logo(); ?>
+                                <strong class="footer-logo-cta">Visit Entertainment</strong>
                             </div>
                         </div>
                     </div>

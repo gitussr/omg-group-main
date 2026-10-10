@@ -10,4 +10,18 @@ footer .bottom-block .row > [class^="col-"]:last-child{
 footer .bottom-block .row > [class^="col-"]:last-child .box{
    height: auto;
 }
+/* Footer logo + "Visit Entertainment" caption: stack & centre */
+footer .bottom-block .footer-logo-box{
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: clamp(10px, 0.781vw, 15px);
+}
+footer .bottom-block .footer-logo-cta{
+   font-weight: 700;
+   color: var(--primary-solid-color);
+   font-size: var(--uc-font-size-20);
+   line-height: 1.2;
+   text-align: center;
+}
 /* ===== end OMG footer tweaks ===== */
