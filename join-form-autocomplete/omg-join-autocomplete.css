@@ -1,30 +1,13 @@
 /* OMG Group "Join Our Team" — Address field search icon
- * Scoped to form 2's Address field container so nothing else is affected. */
+ * Rendered as the input's own background-image on the RIGHT edge, so it can
+ * never be covered by the theme and never blocks typing or the caret. */
 
-#field_2_17 .omg-aac-field,
-.omg-aac-field {
-  position: relative;
-}
-
-/* Magnifying-glass icon sitting inside the left edge of the Address input. */
-.omg-aac-field .omg-aac-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;      /* neutral grey; inherits currentColor into the SVG */
-  pointer-events: auto;
-  cursor: text;
-  z-index: 2;
-  line-height: 0;
-}
-
-/* Make room for the icon so typed text never overlaps it. */
-.omg-aac-field #input_2_17 {
-  padding-left: 38px !important;
+#input_2_17 {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='18'%20height='18'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%238a8a8a'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='11'%20cy='11'%20r='7'/%3E%3Cline%20x1='21'%20y1='21'%20x2='16.65'%20y2='16.65'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 18px 18px !important;
+  padding-right: 42px !important;
 }
 
 /* Keep Google's suggestion dropdown above the form / theme layers. */

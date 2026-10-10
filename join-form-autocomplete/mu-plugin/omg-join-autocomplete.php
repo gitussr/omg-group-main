@@ -1,47 +1,218 @@
 <?php
 /**
  * Plugin Name: OMG Join Form — Google Places Autocomplete
- * Description: Adds Google Places autocomplete to the Address field of Gravity Form id 2 (Join Our Team) and auto-populates Suburb, State, Postal Code and Country. Adds a search icon. Deployed as a must-use plugin.
- * Version:     1.0.0
+ * Description: Google Places autocomplete on the Address field of Gravity Form id 2 (Join Our Team); auto-populates Suburb, State, Postal Code, Country; search icon in the Address field. Must-use plugin.
+ * Version:     1.1.0
  * Author:      OMG Group
  *
- * Must-use plugin: loads automatically, no activation needed. Remove this file
+ * Must-use plugin: loads automatically, no activation needed. Delete this file
  * to fully revert. Replaces the "GF Google Address Autocomplete" plugin, which
- * is disabled as part of this deployment (it did not map the separate fields).
+ * is disabled server-side as part of this deployment.
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 add_action( 'wp_enqueue_scripts', function () {
-
-	// Register inline-only handles (no external file needed).
-	wp_register_script( 'omg-join-aac', '', array(), '1.0.0', true );
+	wp_register_script( 'omg-join-aac', '', array(), '1.1.0', true );
 	wp_enqueue_script( 'omg-join-aac' );
-
-	wp_register_style( 'omg-join-aac', false, array(), '1.0.0' );
+	wp_register_style( 'omg-join-aac', false, array(), '1.1.0' );
 	wp_enqueue_style( 'omg-join-aac' );
+	$css = <<<'OMGCSS'
+/* OMG Group "Join Our Team" — Address field search icon
+ * Rendered as the input's own background-image on the RIGHT edge, so it can
+ * never be covered by the theme and never blocks typing or the caret. */
 
-	$css = <<<CSS
-.omg-aac-field{position:relative}
-.omg-aac-field .omg-aac-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;color:#6b7280;cursor:text;z-index:2;line-height:0}
-.omg-aac-field #input_2_17{padding-left:38px !important}
-.pac-container{z-index:100000 !important}
-CSS;
+#input_2_17 {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='18'%20height='18'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%238a8a8a'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='11'%20cy='11'%20r='7'/%3E%3Cline%20x1='21'%20y1='21'%20x2='16.65'%20y2='16.65'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 18px 18px !important;
+  padding-right: 42px !important;
+}
+
+/* Keep Google's suggestion dropdown above the form / theme layers. */
+.pac-container {
+  z-index: 100000 !important;
+}
+OMGCSS;
 	wp_add_inline_style( 'omg-join-aac', $css );
+	$js = <<<'OMGJS'
+/*
+ * OMG Group — "Join Our Team" Google Places autocomplete
+ * Form id: 2  |  Page: https://omggroup.com.au/join-our-team/
+ *
+ * Attaches Google Places Autocomplete to the Address field and auto-populates
+ * the separate Suburb, State, Postal Code and Country fields. Adds a search
+ * icon inside the Address field.
+ *
+ * Field map (form 2):
+ *   Address      -> #input_2_17  (text)   street number + route
+ *   Suburb       -> #input_2_18  (text)   locality
+ *   State        -> #input_2_16  (select) admin_area_level_1 short_name
+ *   Postal Code  -> #input_2_19  (text)   postal_code
+ *   Country      -> #input_2_20  (text)   country long_name
+ */
+(function () {
+  'use strict';
 
-	$key = 'AIzaSyAQPSgakhnhy0F8oSeb94We6qWr8wtoaJg';
-	$js  = <<<JS
-(function(){'use strict';
-var CFG={apiKey:'{$key}',country:'au',fields:{address:'input_2_17',suburb:'input_2_18',state:'input_2_16',zip:'input_2_19',country:'input_2_20'}};
-function byId(id){return document.getElementById(id);}
-function setValue(id,v){var el=byId(id);if(!el||v==null)return;el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}
-function setSelect(id,sn){var el=byId(id);if(!el||!sn)return;var w=String(sn).toUpperCase();for(var i=0;i<el.options.length;i++){if(el.options[i].value.toUpperCase()===w){el.selectedIndex=i;el.dispatchEvent(new Event('change',{bubbles:true}));if(window.jQuery&&window.jQuery(el).data('chosen')){window.jQuery(el).trigger('chosen:updated');}return;}}}
-function pick(c,t,s){for(var i=0;i<c.length;i++){if(c[i].types.indexOf(t)!==-1){return s?c[i].short_name:c[i].long_name;}}return '';}
-function fill(p){if(!p||!p.address_components)return;var c=p.address_components;var street=((pick(c,'street_number',false)+' '+pick(c,'route',false)).trim());var suburb=pick(c,'locality',false)||pick(c,'postal_town',false)||pick(c,'sublocality_level_1',false)||pick(c,'sublocality',false);var state=pick(c,'administrative_area_level_1',true);var zip=pick(c,'postal_code',false);var ctry=pick(c,'country',false);setValue(CFG.fields.address,street||p.name||'');setValue(CFG.fields.suburb,suburb);setSelect(CFG.fields.state,state);setValue(CFG.fields.zip,zip);setValue(CFG.fields.country,ctry);}
-function addIcon(input){var box=input.closest('.ginput_container')||input.parentNode;if(!box||box.querySelector('.omg-aac-icon'))return;box.classList.add('omg-aac-field');var ic=document.createElement('span');ic.className='omg-aac-icon';ic.setAttribute('aria-hidden','true');ic.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';box.insertBefore(ic,box.firstChild);ic.addEventListener('click',function(){input.focus();});}
-function initField(){var input=byId(CFG.fields.address);if(!input||input.dataset.omgAac==='1')return;if(!(window.google&&google.maps&&google.maps.places))return;input.dataset.omgAac='1';addIcon(input);var a=new google.maps.places.Autocomplete(input,{componentRestrictions:{country:CFG.country},fields:['address_components','formatted_address','geometry','name'],types:['address']});a.addListener('place_changed',function(){fill(a.getPlace());});input.addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13){var pac=document.querySelector('.pac-container');if(pac&&pac.offsetParent!==null)e.preventDefault();}});}
-function ensure(){if(!byId(CFG.fields.address))return;if(window.google&&google.maps&&google.maps.places){initField();return;}if(window.__omgAacLoading){var t=setInterval(function(){if(window.google&&google.maps&&google.maps.places){clearInterval(t);initField();}},200);return;}window.__omgAacLoading=true;window.__omgAacInit=function(){initField();};var s=document.createElement('script');s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(CFG.apiKey)+'&libraries=places&loading=async&callback=__omgAacInit';s.async=true;s.defer=true;document.head.appendChild(s);}
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',ensure);}else{ensure();}
-if(window.jQuery){window.jQuery(document).on('gform_post_render',function(e,formId){if(formId==2)ensure();});}
+  var CONFIG = {
+    apiKey: 'AIzaSyAQPSgakhnhy0F8oSeb94We6qWr8wtoaJg', // restrict by HTTP referrer in Google Cloud
+    country: 'au',
+    fields: {
+      address: 'input_2_17',
+      suburb:  'input_2_18',
+      state:   'input_2_16',
+      zip:     'input_2_19',
+      country: 'input_2_20'
+    }
+  };
+
+  // ---- small helpers --------------------------------------------------------
+  function byId(id) { return document.getElementById(id); }
+
+  function setValue(id, value) {
+    var el = byId(id);
+    if (!el || value == null) return;
+    el.value = value;
+    // Let Gravity Forms / conditional logic / Chosen notice the change.
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // The Address field is the one bound to Autocomplete. Writing to it must NOT
+  // fire an 'input' event, or the Autocomplete widget re-runs its search and
+  // the suggestions dropdown reopens in a loop. Fire 'change' only.
+  function setAddressValue(id, value) {
+    var el = byId(id);
+    if (!el) return;
+    el.value = value == null ? '' : value;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function setSelect(id, shortName) {
+    var el = byId(id);
+    if (!el || !shortName) return;
+    var want = String(shortName).toUpperCase();
+    for (var i = 0; i < el.options.length; i++) {
+      if (el.options[i].value.toUpperCase() === want) {
+        el.selectedIndex = i;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        // Keep a Chosen-enhanced select in sync, if present.
+        if (window.jQuery && window.jQuery(el).data('chosen')) {
+          window.jQuery(el).trigger('chosen:updated');
+        }
+        return;
+      }
+    }
+  }
+
+  // Pull a named component out of a Google place result.
+  function pick(components, type, useShort) {
+    for (var i = 0; i < components.length; i++) {
+      if (components[i].types.indexOf(type) !== -1) {
+        return useShort ? components[i].short_name : components[i].long_name;
+      }
+    }
+    return '';
+  }
+
+  // ---- fill the form from a selected place ----------------------------------
+  function fillFromPlace(place) {
+    if (!place || !place.address_components) return;
+    var c = place.address_components;
+
+    var streetNo = pick(c, 'street_number', false);
+    var route    = pick(c, 'route', false);
+    var street   = (streetNo + ' ' + route).trim();
+
+    var suburb = pick(c, 'locality', false)
+              || pick(c, 'postal_town', false)
+              || pick(c, 'sublocality_level_1', false)
+              || pick(c, 'sublocality', false);
+
+    var state = pick(c, 'administrative_area_level_1', true);  // e.g. "NSW"
+    var zip   = pick(c, 'postal_code', false);
+    var ctry  = pick(c, 'country', false);                     // e.g. "Australia"
+
+    // Address line: prefer the street; fall back to the place name so the box
+    // is never left showing the full "street, suburb, state" formatted string.
+    setAddressValue(CONFIG.fields.address, street || place.name || '');
+    setValue(CONFIG.fields.suburb,  suburb);
+    setSelect(CONFIG.fields.state,  state);
+    setValue(CONFIG.fields.zip,     zip);
+    setValue(CONFIG.fields.country, ctry);
+  }
+
+  // ---- attach autocomplete to the address field -----------------------------
+  // (The search icon is a pure-CSS background-image on the input; see the CSS.)
+  function initField() {
+    var input = byId(CONFIG.fields.address);
+    if (!input || input.dataset.omgAac === '1') return; // run once per field
+    if (!(window.google && google.maps && google.maps.places)) return;
+
+    input.dataset.omgAac = '1';
+    input.classList.add('omg-aac-field');
+
+    var auto = new google.maps.places.Autocomplete(input, {
+      componentRestrictions: { country: CONFIG.country },
+      fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+      types: ['address']
+    });
+
+    auto.addListener('place_changed', function () {
+      fillFromPlace(auto.getPlace());
+    });
+
+    // Stop the Enter key (used to accept a suggestion) from submitting the form.
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        var pac = document.querySelector('.pac-container');
+        if (pac && pac.offsetParent !== null) e.preventDefault();
+      }
+    });
+  }
+
+  // ---- load the Google Maps JS API once, then init --------------------------
+  function ensureApiThenInit() {
+    if (!byId(CONFIG.fields.address)) return; // field not on this page
+
+    if (window.google && google.maps && google.maps.places) {
+      initField();
+      return;
+    }
+    // Another script (e.g. the old plugin) may already be loading it.
+    if (window.__omgAacLoading) {
+      var t = setInterval(function () {
+        if (window.google && google.maps && google.maps.places) {
+          clearInterval(t);
+          initField();
+        }
+      }, 200);
+      return;
+    }
+    window.__omgAacLoading = true;
+    window.__omgAacInit = function () { initField(); };
+    var s = document.createElement('script');
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+      encodeURIComponent(CONFIG.apiKey) +
+      '&libraries=places&loading=async&callback=__omgAacInit';
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+
+  // ---- bootstrap: initial load + Gravity Forms AJAX re-render ---------------
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureApiThenInit);
+  } else {
+    ensureApiThenInit();
+  }
+
+  // Gravity Forms re-renders the form markup after AJAX validation; re-attach.
+  if (window.jQuery) {
+    window.jQuery(document).on('gform_post_render', function (e, formId) {
+      if (formId == 2) ensureApiThenInit();
+    });
+  }
 })();
-JS;
+OMGJS;
 	wp_add_inline_script( 'omg-join-aac', $js );
 } );

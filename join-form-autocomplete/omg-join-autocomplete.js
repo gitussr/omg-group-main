@@ -40,6 +40,16 @@
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
+  // The Address field is the one bound to Autocomplete. Writing to it must NOT
+  // fire an 'input' event, or the Autocomplete widget re-runs its search and
+  // the suggestions dropdown reopens in a loop. Fire 'change' only.
+  function setAddressValue(id, value) {
+    var el = byId(id);
+    if (!el) return;
+    el.value = value == null ? '' : value;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
   function setSelect(id, shortName) {
     var el = byId(id);
     if (!el || !shortName) return;
@@ -87,39 +97,22 @@
 
     // Address line: prefer the street; fall back to the place name so the box
     // is never left showing the full "street, suburb, state" formatted string.
-    setValue(CONFIG.fields.address, street || place.name || '');
+    setAddressValue(CONFIG.fields.address, street || place.name || '');
     setValue(CONFIG.fields.suburb,  suburb);
     setSelect(CONFIG.fields.state,  state);
     setValue(CONFIG.fields.zip,     zip);
     setValue(CONFIG.fields.country, ctry);
   }
 
-  // ---- search icon ----------------------------------------------------------
-  function addSearchIcon(input) {
-    var container = input.closest('.ginput_container') || input.parentNode;
-    if (!container || container.querySelector('.omg-aac-icon')) return;
-    container.classList.add('omg-aac-field');
-    var icon = document.createElement('span');
-    icon.className = 'omg-aac-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.innerHTML =
-      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" ' +
-      'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
-      'stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle>' +
-      '<line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
-    container.insertBefore(icon, container.firstChild);
-    // Focus the field if someone taps the icon.
-    icon.addEventListener('click', function () { input.focus(); });
-  }
-
   // ---- attach autocomplete to the address field -----------------------------
+  // (The search icon is a pure-CSS background-image on the input; see the CSS.)
   function initField() {
     var input = byId(CONFIG.fields.address);
     if (!input || input.dataset.omgAac === '1') return; // run once per field
     if (!(window.google && google.maps && google.maps.places)) return;
 
     input.dataset.omgAac = '1';
-    addSearchIcon(input);
+    input.classList.add('omg-aac-field');
 
     var auto = new google.maps.places.Autocomplete(input, {
       componentRestrictions: { country: CONFIG.country },
